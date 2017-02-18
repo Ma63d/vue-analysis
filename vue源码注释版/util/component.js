@@ -38,10 +38,13 @@ if (process.env.NODE_ENV !== 'production') {
 export function checkComponentAttr (el, options) {
   var tag = el.tagName.toLowerCase()
   var hasAttrs = el.hasAttributes()
+  // 如果既不是真正的dom元素,也不是partial slot component这种
   if (!commonTagRE.test(tag) && !reservedTagRE.test(tag)) {
+    // 那么就拿tag名去找找是不是有这个自定义的component
     if (resolveAsset(options, 'components', tag)) {
       return { id: tag }
     } else {
+      // 否则就再看看是不是动态绑定:is的
       var is = hasAttrs && getIsBinding(el, options)
       if (is) {
         return is
@@ -65,6 +68,7 @@ export function checkComponentAttr (el, options) {
       }
     }
   } else if (hasAttrs) {
+    // 看看是不是动态绑定:is的
     return getIsBinding(el, options)
   }
 }
@@ -81,13 +85,16 @@ function getIsBinding (el, options) {
   // dynamic syntax
   var exp = el.getAttribute('is')
   if (exp != null) {
+    // 存在is属性
     if (resolveAsset(options, 'components', exp)) {
+      // 且存在对应component
       el.removeAttribute('is')
       return { id: exp }
     }
   } else {
     exp = getBindAttr(el, 'is')
     if (exp != null) {
+      // 存在动态绑定:is
       return { id: exp, dynamic: true }
     }
   }

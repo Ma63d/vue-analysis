@@ -19,14 +19,19 @@ import {
 } from '../util/index'
 
 // special binding prefixes
+
 const bindRE = /^v-bind:|^:/
 const onRE = /^v-on:|^@/
+
+// 判断是否是"v-"开头的指令,捕获v-后面的内容,不捕获"."字符后面的内容,因为它们属于modifier部分
 const dirAttrRE = /^v-([^:]+)(?:$|:(.*)$)/
+// 是否有modifier
 const modifierRE = /\.[^\.]+/g
 const transitionRE = /^(v-bind:|:)?transition$/
 
 // default directive priority
 const DEFAULT_PRIORITY = 1000
+// 优先值大于两千才可是终端指令
 const DEFAULT_TERMINAL_PRIORITY = 2000
 
 /**
@@ -306,6 +311,11 @@ function compileElement (el, options) {
   // preprocess textareas.
   // textarea treats its text content as the initial value.
   // just bind it as an attr directive for value.
+  // textarea元素是把tag中间的内容当做了他的value,这和input什么的不太一样
+  // 因此大家写模板的时候通常是这样写: <textarea>{{hello}}</textarea>
+  // 但是template转换成dom之后,这个内容跑到了textarea元素的value属性上,tag中间的内容是空的,
+  // 因此遇到textarea的时候需要单独编译一下它的value
+
   if (el.tagName === 'TEXTAREA') {
     var tokens = parseText(el.value)
     if (tokens) {
@@ -524,6 +534,8 @@ function checkElementDirectives (el, options) {
   if (commonTagRE.test(tag)) {
     return
   }
+  // 元素指令都是用户自定义的,并且将它的定义放在了options里,需用通过
+  // resolveAsset取出
   var def = resolveAsset(options, 'elementDirectives', tag)
   if (def) {
     return makeTerminalNodeLinkFn(el, tag, '', options, def)
@@ -573,8 +585,15 @@ function checkComponent (el, options) {
  * @return {Function} terminalLinkFn
  */
 
+// 检查元素的属性里是否具有终端指令
+// 如果有 则返回terminal link function
+// 终端指令的定义详见 http://v1-cn.vuejs.org/guide/custom-directive.html#terminal
+// 比如v-if 因为元素是否存在和编译需要视v-if的值而定, (这个元素最终都不存在你编译他的指令和内容干嘛...- -)
+// 所以编译和link的任务交由v-if决定
+// 再比如v-for v-for决定了元素是否存在,如果存在会具体复制几份, 指令和dom内容的编译都是具体到v-for
+// 里的每个元素上的,所以交由v-for接管
+
 function checkTerminalDirectives (el, attrs, options) {
-  // skip v-pre
   if (getAttr(el, 'v-pre') !== null) {
     return skip
   }
@@ -585,14 +604,19 @@ function checkTerminalDirectives (el, attrs, options) {
       return skip
     }
   }
-
+  //termDef用于存储循环中之前检测出的终端指令
   var attr, name, value, modifiers, matched, dirName, rawName, arg, def, termDef
   for (var i = 0, j = attrs.length; i < j; i++) {
     attr = attrs[i]
     name = attr.name.replace(modifierRE, '')
+
+    //只有以"v-"开头的指令才可能是vue内部的终端指令,其他则不用考虑
     if ((matched = name.match(dirAttrRE))) {
       def = resolveAsset(options, 'directives', matched[1])
       if (def && def.terminal) {
+        // 如果之前没有检测出终端指令 或者 之前的终端指令比当前的小,或者比2000小(当前没有优先级的情况下)
+        // 那么进入下面的if
+        // 保证最终接管这个元素的编译连接过程的是那个最高优先级的终端指令
         if (!termDef || ((def.priority || DEFAULT_TERMINAL_PRIORITY) > termDef.priority)) {
           termDef = def
           rawName = attr.name

@@ -372,6 +372,12 @@ export function mergeOptions (parent, child, vm) {
  * @param {Boolean} warnMissing
  * @return {Object|Function}
  */
+// 这个函数用于取出资源, 什么是资源,比如说你自定义的指令,自定义的filter,自定义的组件,partials
+// 比如Vue内部定义的指令,过滤器 等等
+// 他们都是存放在options对象上的具体的type字段的,
+// 比如你自定义的指令是 Vue.directive('my-directive', {..})
+// 他就是存放在 options['directive']['myDirective']上的,'directive'是type,'myDirective'是Id
+// 取出过程不用说了
 
 export function resolveAsset (options, type, id, warnMissing) {
   /* istanbul ignore if */
