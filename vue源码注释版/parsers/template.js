@@ -109,6 +109,14 @@ function stringToFragment (templateString, raw) {
       document.createTextNode(templateString)
     )
   } else {
+    // 这里如函数签名所说,使用了jQuery 和 component/domify中所使用的生成元素的策略
+    // 我们要将模板变成实际的dom元素,一个简单的方法的是创建一个div document.createElement('div')
+    // 然后再设置这个div的innerHtml为我们的模板,
+    // (不直接创建一个模板的根元素是因为模板可能是片段实例,也就会生成多个dom元素)
+    // (而设置这个div的outerHtml也不行哈,不能设置没有父元素的outerHtml)
+    // 但是许多特殊元素只能再固定的父元素下存在,不能直接存在于div下,比如tbody,tr,th,td,legend等等等等
+    // 那么怎么办? 所以就有了下面这个先获取第一个标签,然后按照map的里预先设置的内容,给模板设置设置好父元素,
+    // 把模板嵌入到合适的父元素下,然后再层层进入父元素获取真正的模板元素.
     var tag = tagMatch && tagMatch[1]
     var wrap = map[tag] || map.efault
     var depth = wrap[0]
