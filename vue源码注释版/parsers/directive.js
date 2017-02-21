@@ -74,7 +74,7 @@ function processFilterArg (arg) {
  * @param {String} s
  * @return {Object}
  */
-
+// 用来提取出指令的表达式当中的filters部分,并解析出表达式的name和参数部分,参见上面注释中的实例
 export function parseDirective (s) {
   var hit = cache.get(s)
   if (hit) {
@@ -87,27 +87,33 @@ export function parseDirective (s) {
   curly = square = paren = 0
   lastFilterIndex = 0
   dir = {}
-
+  //接下来解析每一个指令中的每一个字符
   for (i = 0, l = str.length; i < l; i++) {
     prev = c
     c = str.charCodeAt(i)
     if (inSingle) {
       // check single quote
+      // 如果处于单引号之后,那么只用判断当前是否单引号,其他情况都不用管,不会产生新filter
+      // 0x5C 为转义字符
       if (c === 0x27 && prev !== 0x5C) inSingle = !inSingle
     } else if (inDouble) {
       // check double quote
+      // 如果处于双引号之后,那么只用判断当前是否单引号,其他情况都不用管,不会产生新filter
       if (c === 0x22 && prev !== 0x5C) inDouble = !inDouble
     } else if (
+      // 遇到'|'了 filter开始
       c === 0x7C && // pipe
       str.charCodeAt(i + 1) !== 0x7C &&
       str.charCodeAt(i - 1) !== 0x7C
     ) {
       if (dir.expression == null) {
         // first filter, end of expression
+        // '|' 之后的字符都属于filter 之前的则是expression部分
         lastFilterIndex = i + 1
         dir.expression = str.slice(0, i).trim()
       } else {
         // already has filter
+        // 又遇到了filter,先记录之前的的filter
         pushFilter()
       }
     } else {
@@ -127,6 +133,7 @@ export function parseDirective (s) {
   if (dir.expression == null) {
     dir.expression = str.slice(0, i).trim()
   } else if (lastFilterIndex !== 0) {
+    // 记录最后一个filter
     pushFilter()
   }
 

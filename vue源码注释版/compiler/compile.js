@@ -534,7 +534,7 @@ function checkElementDirectives (el, options) {
   if (commonTagRE.test(tag)) {
     return
   }
-  // 元素指令都是用户自定义的,并且将它的定义放在了options里,需用通过
+  // 元素指令都是用户自定义的,并且将它的定义放在了options里,需要通过
   // resolveAsset取出
   var def = resolveAsset(options, 'elementDirectives', tag)
   if (def) {
@@ -589,7 +589,7 @@ function checkComponent (el, options) {
 // 如果有 则返回terminal link function
 // 终端指令的定义详见 http://v1-cn.vuejs.org/guide/custom-directive.html#terminal
 // 比如v-if 因为元素是否存在和编译需要视v-if的值而定, (这个元素最终都不存在你编译他的指令和内容干嘛...- -)
-// 所以编译和link的任务交由v-if决定
+// 所以编译和link的任务交由v-if决定(在v-if的值为true之后开始编译和link)
 // 再比如v-for v-for决定了元素是否存在,如果存在会具体复制几份, 指令和dom内容的编译都是具体到v-for
 // 里的每个元素上的,所以交由v-for接管
 
@@ -820,7 +820,7 @@ function parseModifiers (name) {
  * @param {Array} directives
  * @return {Function} directivesLinkFn
  */
-
+// 让link函数闭包住编译阶段生成好的dir对象(他们还不是Directive实例,虽然变量名叫做directives)
 function makeNodeLinkFn (directives) {
   return function nodeLinkFn (vm, el, host, scope, frag) {
     // reverse apply because it's sorted low to high
