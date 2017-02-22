@@ -88,6 +88,7 @@ Directive.prototype._bind = function () {
   }
 
   // copy def properties
+  // 不采用原型链继承,而是直接用定义对象来扩展Directive实例
   var def = descriptor.def
   if (typeof def === 'function') {
     this.update = def
@@ -96,6 +97,9 @@ Directive.prototype._bind = function () {
   }
 
   // setup directive params
+  // 获取指令的参数, 对于一些指令, 指令的元素上可能存在其他的attr来作为指令运行的参数
+  // 比如v-for指令,那么元素上的attr: track-by="..." 就是参数
+  // 比如组件指令,那么元素上可能写了transition-mode="out-in", 诸如此类
   this._setupParams()
 
   // initial bind
@@ -107,6 +111,8 @@ Directive.prototype._bind = function () {
   if (this.literal) {
     this.update && this.update(descriptor.raw)
   } else if (
+  // 下面这些判断是因为许多指令比如slot component之类的并不是响应式的,
+  // 他们只需要在bind处理好dom的分发和编译\link即可然后他们的使命就结束了
     (this.expression || this.modifiers) &&
     (this.update || this.twoWay) &&
     !this._checkStatement()
@@ -114,6 +120,7 @@ Directive.prototype._bind = function () {
     // wrapped updater for context
     var dir = this
     if (this.update) {
+      // 处理一下原本的update函数,加入lock判断
       this._update = function (val, oldVal) {
         if (!dir._locked) {
           dir.update(val, oldVal)
@@ -122,6 +129,7 @@ Directive.prototype._bind = function () {
     } else {
       this._update = noop
     }
+    // 绑定好 预处理 和 后处理 函数的this,因为他们即将作为属性放入一个参数对象当中,不绑定的话this会变
     var preProcess = this._preProcess
       ? bind(this._preProcess, this)
       : null
@@ -225,6 +233,7 @@ Directive.prototype._setupParamWatcher = function (key, expression) {
 
 Directive.prototype._checkStatement = function () {
   var expression = this.expression
+  // 原生vue指令中只有on指令的acceptStatement为true
   if (
     expression && this.acceptStatement &&
     !isSimplePath(expression)
@@ -232,6 +241,7 @@ Directive.prototype._checkStatement = function () {
     var fn = parseExpression(expression).get
     var scope = this._scope || this.vm
     var handler = function (e) {
+      // 使得事件回调函数内部可以通过$event拿到事件
       scope.$event = e
       fn.call(scope, scope)
       scope.$event = null
@@ -239,6 +249,9 @@ Directive.prototype._checkStatement = function () {
     if (this.filters) {
       handler = scope._applyFilters(handler, null, this.filters)
     }
+    // 对于v-on指令,因为他在this._bind里没有进入后续的的if语句
+    // 所以没有最终执行this.update将计算好的值第一次更新到指令上去
+    // 所以要手动this.update一下
     this.update(handler)
     return true
   }

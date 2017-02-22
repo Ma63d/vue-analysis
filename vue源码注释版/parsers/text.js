@@ -102,7 +102,8 @@ export function parseText (text) {
  * @param {Vue} [vm]
  * @return {String}
  */
-
+// 这个函数不仅仅是把插值转换为表达式,他其实隐式的使用formatToken完成了单次插值的求值(vm.$eval)
+// 比如这样一段插值模板: 'a {{* b}} c',假设 b= "text",那么会变成'"a " + "text" + " c"'
 export function tokensToExp (tokens, vm) {
   if (tokens.length > 1) {
     return tokens.map(function (token) {

@@ -738,6 +738,7 @@ function compileDirectives (attrs, options) {
     if (bindRE.test(name)) {
       dirName = name.replace(bindRE, '')
       if (dirName === 'style' || dirName === 'class') {
+        // 这里不设置arg,这就使得v-bind指令的update函数里会执行this.handleObject而不是this.handleSingle
         pushDir(dirName, internalDirectives[dirName])
       } else {
         arg = dirName
@@ -786,6 +787,11 @@ function compileDirectives (attrs, options) {
       expression: parsed && parsed.expression,
       filters: parsed && parsed.filters,
       interp: interpTokens,
+      // 这个用来记录是否是单次插值的属性只会在bind指令中用到,
+      // bind指令的bind阶段检测到这个属性之后会执行parseExpression,然后隐式的处理单次插值的情况
+      // 处理后的expression表达式是这样的: 举个栗子,'"hello " + " world " + "!"'
+      // 这个纯字符串字面量的表达式的求值过程不会触发任何响应式属性的getter,
+      // 也就不存在依赖,自然也就不会存在响应式更新的情况,这就是单次插值的整个实现原理
       hasOneTime: hasOneTimeToken
     })
   }

@@ -41,6 +41,8 @@ export default {
     if (tokens) {
       // handle interpolations with one-time tokens
       if (descriptor.hasOneTime) {
+        // 对于单次插值的函数直接将表达式转换为'"a " + "text" + " c"',然后以此作为最终的值
+        // 由于单次插值的函数不会订阅任何依赖,不会触发update,所以把这个操作放在了bind里
         this.expression = tokensToExp(tokens, this._scope || this.vm)
       }
 
@@ -90,8 +92,10 @@ export default {
     }
     var attr = this.arg
     if (this.arg) {
+      // v-bind:hello="you" 解析出来this.arg='hello'
       this.handleSingle(attr, value)
     } else {
+      // 处理:class 和 :style, 他们的arg为null 参见compiler/compile.js:compileDirectives
       this.handleObject(value || {})
     }
   },

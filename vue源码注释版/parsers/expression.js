@@ -74,11 +74,16 @@ function save (str, isString) {
  */
 
 function rewrite (raw) {
+  // 保留第一个字符是因为identRE的匹配到的第一个字符是非变量字符,这个字符为前一个运算符当中的部分或者是空格
+  // 比如' result=a+b' 那么raw就会匹配上' result' 和' =a' 和' +b',所以要保留第一个=和+,
+  // 然后将结果加上'scope.' 变成'scope.result=scope.a+scope.b'
   var c = raw.charAt(0)
   var path = raw.slice(1)
   if (allowedKeywordsRE.test(path)) {
     return raw
   } else {
+    // 如果是字符串 那就不加
+    // 不过按理说只有raw.charAt(0)可能会是引号,path里不会匹配到引号啊
     path = path.indexOf('"') > -1
       ? path.replace(restoreRE, restore)
       : path
@@ -115,11 +120,14 @@ function compileGetter (exp) {
   // reset state
   saved.length = 0
   // save strings and object literal keys
+  // fixme! 没有看明白这个saveRE和save函数具体是对字符串做了什么处理
   var body = exp
     .replace(saveRE, save)
     .replace(wsRE, '')
   // rewrite all paths
   // pad 1 space here because the regex matches 1 extra char
+  // identRE会匹配到变量,将变量rewrite为scope.xxx的形式,
+  // fixme! 没有看明白restoreRE和restore函数具体是对字符串做了什么处理
   body = (' ' + body)
     .replace(identRE, rewrite)
     .replace(restoreRE, restore)
@@ -205,6 +213,8 @@ export function parseExpression (exp, needSet) {
     // optimized super simple getter
     ? makeGetterFn('scope.' + exp)
     // dynamic getter
+    // 如果不是简单Path, 也就是语句了,那么就要对这个字符串做一些额外的处理了,
+    // 主要是在变量前加上'scope.'
     : compileGetter(exp)
   if (needSet) {
     res.set = compileSetter(exp)
@@ -221,6 +231,10 @@ export function parseExpression (exp, needSet) {
  */
 
 export function isSimplePath (exp) {
+  // 检查是否是 a['b'] 或者 a.b.c 这样的
+  // 或者是true false null 这种字面量
+  // 再或者就是Math.max这样,
+  // 对于a=true和a/=2和hello()这种就不是simple path
   return pathTestRE.test(exp) &&
     // don't treat literal values as paths
     !literalValueRE.test(exp) &&
