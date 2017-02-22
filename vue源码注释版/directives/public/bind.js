@@ -101,6 +101,7 @@ export default {
   },
 
   // share object handler with v-bind:class
+  // 绑定对象只可能发生在:class和:style情况下,所以直接用了vStyle.handleObject
   handleObject: vStyle.handleObject,
 
   handleSingle (attr, value) {

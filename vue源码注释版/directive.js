@@ -112,7 +112,7 @@ Directive.prototype._bind = function () {
     this.update && this.update(descriptor.raw)
   } else if (
   // 下面这些判断是因为许多指令比如slot component之类的并不是响应式的,
-  // 他们只需要在bind处理好dom的分发和编译\link即可然后他们的使命就结束了
+  // 他们只需要在bind处理好dom的分发和编译/link即可然后他们的使命就结束了,生成watcher和收集依赖等步骤根本没有
     (this.expression || this.modifiers) &&
     (this.update || this.twoWay) &&
     !this._checkStatement()
