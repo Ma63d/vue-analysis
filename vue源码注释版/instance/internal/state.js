@@ -77,6 +77,9 @@ export default function (Vue) {
    */
 
   Vue.prototype._initData = function () {
+    // 初始化数据,其实一方面把data的内容代理到vm实例上,
+    // 另一方面改造data,变成reactive的
+    // 即get时触发依赖收集(将订阅者加入Dep实例的subs数组中),set时notify订阅者
     var dataFn = this.$options.data
     var data = this._data = dataFn ? dataFn() : {}
     if (!isPlainObject(data)) {
@@ -98,6 +101,11 @@ export default function (Vue) {
       // 2. it's provided via a instantiation option AND there are no
       //    template prop present
       if (!props || !hasOwn(props, key)) {
+        // 将data属性的内容代理到vm上面去,使得vm访问指定属性即可拿到_data内的同名属性
+        // 实现vm.prop === vm._data.prop,
+        // 这样当前vm的后代实例就能直接通过原型链查找到父代的属性
+        // 比如v-for指令会为数组的每一个元素创建一个scope,这个scope就继承自vm或上级数组元素的scope,
+        // 这样就可以在v-for的作用域中访问父级的数据
         this._proxy(key)
       } else if (process.env.NODE_ENV !== 'production') {
         warn(
@@ -226,17 +234,22 @@ export default function (Vue) {
             ? bind(userDef.set, this)
             : noop
         }
+        // 封装好计算属性的getter/setter后define到vm实例上.
         Object.defineProperty(this, key, def)
       }
     }
   }
 
   function makeComputedGetter (getter, owner) {
+    // 新建一个lazy watcher,闭包在计算属性被封装过后的getter中
     var watcher = new Watcher(owner, getter, null, {
       lazy: true
     })
     return function computedGetter () {
+      // 这个函数才是计算属性的真正getter,
       if (watcher.dirty) {
+        // 如果数据是脏的 那么需要更新,否则就直接返回了,
+        // 这也就是官网计算属性的奥秘一章中Date.now()的那个例子中,每次计算属性得到的时间戳不变的原因
         watcher.evaluate()
       }
       if (Dep.target) {

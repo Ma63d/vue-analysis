@@ -42,12 +42,18 @@ export function Observer (value) {
   this.dep = new Dep()
   def(value, '__ob__', this)
   if (isArray(value)) {
+    // 如果是数组,要改写数组的push pop shift等方法 参见http://v1.vuejs.org/guide/list.html#Array-Change-Detection
+    // 而es5及更低版本的js标准情况下无法完美继承数组
+    // 参见http://perfectionkills.com/how-ecmascript-5-still-does-not-allow-to-subclass-an-array/
+    // 如果浏览器实现了非标准的__proto__属性的话,那么可以实现继承数组,
+    // 否则就只能用扩展实例的方式将改写过的push等方法直接def到实例上
     var augment = hasProto
       ? protoAugment
       : copyAugment
     augment(value, arrayMethods, arrayKeys)
     this.observeArray(value)
   } else {
+    // 如果是对象则使用walk遍历每个属性
     this.walk(value)
   }
 }
@@ -126,7 +132,7 @@ Observer.prototype.removeVm = function (vm) {
  * @param {Object|Array} target
  * @param {Object} src
  */
-
+// 如果浏览器环境中有__proto__这个属性可用,那么可以用原型链继承的方式去继承数组
 function protoAugment (target, src) {
   /* eslint-disable no-proto */
   target.__proto__ = src
@@ -140,7 +146,7 @@ function protoAugment (target, src) {
  * @param {Object|Array} target
  * @param {Object} proto
  */
-
+// 否则不能继承数组,只能采用扩展实例的方式
 function copyAugment (target, src, keys) {
   for (var i = 0, l = keys.length; i < l; i++) {
     var key = keys[i]
@@ -161,10 +167,12 @@ function copyAugment (target, src, keys) {
 
 export function observe (value, vm) {
   if (!value || typeof value !== 'object') {
+    // 保证只有对象会进入到这个函数
     return
   }
   var ob
   if (
+    //如果这个数据身上已经有ob实例了,那就直接返回那个ob实例
     hasOwn(value, '__ob__') &&
     value.__ob__ instanceof Observer
   ) {
@@ -175,9 +183,12 @@ export function observe (value, vm) {
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+    // 是对象(包括数组)的话就深入进去遍历属性,observe每个属性
     ob = new Observer(value)
   }
   if (ob && vm) {
+    // 把vm加入到ob的vms数组当中,因为有的时候我们会对数据手动执行$set/$delete操作,
+    // 那么就要提示vm实例这个行为的发生(让vm代理这个新$set的数据,和更新界面)
     ob.addVm(vm)
   }
   return ob
@@ -192,6 +203,7 @@ export function observe (value, vm) {
  */
 
 export function defineReactive (obj, key, val) {
+  // 生成一个新的Dep实例,这个实例会被闭包到getter和setter中
   var dep = new Dep()
 
   var property = Object.getOwnPropertyDescriptor(obj, key)
@@ -209,6 +221,9 @@ export function defineReactive (obj, key, val) {
     configurable: true,
     get: function reactiveGetter () {
       var value = getter ? getter.call(obj) : val
+      // 只有在有Dep.target时才说明是Vue内部依赖收集过程触发的getter
+      // 那么这个时候就需要执行dep.depend(),将watcher(Dep.target的实际值)添加到dep的subs数组中
+      // 对于其他时候,比如dom事件回调函数中访问这个变量导致触发的getter并不需要执行依赖收集,直接返回value即可
       if (Dep.target) {
         dep.depend()
         if (childOb) {
@@ -233,7 +248,9 @@ export function defineReactive (obj, key, val) {
       } else {
         val = newVal
       }
+      // observe这个新set的值
       childOb = observe(newVal)
+      // 通知订阅我这个dep的watcher们:我更新了
       dep.notify()
     }
   })

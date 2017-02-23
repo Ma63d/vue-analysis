@@ -39,6 +39,7 @@ function flushBatcherQueue () {
   runBatcherQueue(userQueue)
   // user watchers triggered more watchers,
   // keep flushing until it depletes
+  // userQueue在执行时可能又会往指令queue里加入新任务(用户可能又更改了数据使得dom需要更新)
   if (queue.length) {
     return flushBatcherQueue()
   }
@@ -98,10 +99,13 @@ export function pushWatcher (watcher) {
     const q = watcher.user
       ? userQueue
       : queue
+    // has[id]记录这个watcher在队列中的下标
+    // 主要是判断是否出现了循环更新:你更新我后我更新你,没完没了了
     has[id] = q.length
     q.push(watcher)
     // queue the flush
     if (!waiting) {
+      //waiting这个flag用于标记是否已经把flushBatcherQueue加入到nextTick任务队列当中了
       waiting = true
       nextTick(flushBatcherQueue)
     }

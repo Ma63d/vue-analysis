@@ -30,15 +30,18 @@ var strats = config.optionMergeStrategies = Object.create(null)
 /**
  * Helper that recursively merges two data objects together.
  */
-
+// 递归合并两个对象
 function mergeData (to, from) {
   var key, toVal, fromVal
   for (key in from) {
+    // 遍历from对象的属性
     toVal = to[key]
     fromVal = from[key]
     if (!hasOwn(to, key)) {
+      // 若to对象无该属性直接赋值上去
       set(to, key, fromVal)
     } else if (isObject(toVal) && isObject(fromVal)) {
+      // 如果to和from都有该属性且都是对象,那么递归进去,merge这个子对象的属性
       mergeData(toVal, fromVal)
     }
   }
@@ -73,12 +76,16 @@ strats.data = function (parentVal, childVal, vm) {
     // check if parentVal is a function here because
     // it has to be a function to pass previous merges.
     return function mergedDataFn () {
+      // 把子组件的data构造函数生成的data对象
+      //             merge到
+      // 父组件的data构造函数生成的data对象上去
       return mergeData(
         childVal.call(this),
         parentVal.call(this)
       )
     }
   } else if (parentVal || childVal) {
+    // 如果不是Vue.extend对父子组件类进行merge,那么可能parentVal和childVal是对象也可能是function
     return function mergedInstanceDataFn () {
       // instance merge
       var instanceData = typeof childVal === 'function'

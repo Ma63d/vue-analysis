@@ -46,6 +46,16 @@ export default function Watcher (vm, expOrFn, cb, options) {
   this.cb = cb
   this.id = ++uid // uid for batching
   this.active = true
+  // lazy watcher是在计算属性里用到的,Vue在初始化时会封装你的计算属性的getter,
+  // 并在里面闭包了一个新创建的lazy watcher,详见instance/internal/state.js:Vue.prototype._initComputed函数
+  // 而指令bind函数中创建的那个并不是lazy watcher,即使这个指令是绑定到一个计算属性上的,请注意区分
+  // lazy不会像一般的指令的watcher那样在这个watcher构造函数里计算初始值(this.value)
+  // 求值的时机是在外界get这个计算属性时(参见http://v1-cn.vuejs.org/guide/reactivity.html#计算属性的奥秘),
+  // 而计算属性的getter里写有了逻辑,如果他的lazy watcher的dirty是false,
+  // 就拿出之前计算过的值返回给你(dirty的意思表示是数据的依赖有变化,你需要重新计算)
+  // 否则就会使用Watcher.prototype.evaluate完成求值,
+  // 一旦指定lazy为true,那么这个数据就肯定是dirty的
+  // 因此初始化时,是从没有计算过的,数据是undefined,并非正确的值,因此肯定需要计算,所以this.dirty = this.lazy
   this.dirty = this.lazy // for lazy watchers
   // 用deps存储当前的依赖,而新一轮的依赖收集过程中收集到的依赖则会放到newDeps中
   // 之所以要用一个新的数组存放新的依赖是因为当依赖变动之后,
@@ -61,6 +71,7 @@ export default function Watcher (vm, expOrFn, cb, options) {
   this.prevError = null // for async error stacks
   // parse expression for getter/setter
   if (isFn) {
+    // 对于计算属性来说,就会进入到这里
     this.getter = expOrFn
     this.setter = undefined
   } else {
@@ -73,6 +84,7 @@ export default function Watcher (vm, expOrFn, cb, options) {
     this.setter = res.set
   }
   // 执行get(),既拿到表达式的值,又完成第一轮的依赖收集,使得watcher订阅到相关的依赖
+  // 如果是lazy则不在此处计算初值
   this.value = this.lazy
     ? undefined
     : this.get()
@@ -211,7 +223,9 @@ Watcher.prototype.addDep = function (dep) {
 /**
  * Clean up for dependency collection.
  */
-
+// 新一轮的依赖收集后,依赖被收集到this.newDepIds和this.newDeps里
+// this.deps存储的上一轮的的依赖此时将会被遍历, 找出其中不再依赖的dep,将自己从dep的subs列表中清除
+// 不再订阅那些不依赖的dep
 Watcher.prototype.afterGet = function () {
   Dep.target = null
   var i = this.deps.length
@@ -221,10 +235,12 @@ Watcher.prototype.afterGet = function () {
       dep.removeSub(this)
     }
   }
+  // 清除订阅完成,this.depIds和this.newDepIds交换后清空this.newDepIds
   var tmp = this.depIds
   this.depIds = this.newDepIds
   this.newDepIds = tmp
   this.newDepIds.clear()
+  // 同上,清空数组
   tmp = this.deps
   this.deps = this.newDeps
   this.newDeps = tmp
@@ -240,6 +256,7 @@ Watcher.prototype.afterGet = function () {
 
 Watcher.prototype.update = function (shallow) {
   if (this.lazy) {
+    // lazy模式下,标记下当前是脏的就可以了
     this.dirty = true
   } else if (this.sync || !config.async) {
     this.run()
@@ -312,6 +329,8 @@ Watcher.prototype.run = function () {
 Watcher.prototype.evaluate = function () {
   // avoid overwriting another watcher that is being
   // collected.
+  // 因为lazy watcher的evaluate()可能是在一个指令watcher的get过程中执行的,
+  // 所以指令的依赖收集过程并没有完成,所以先用current缓存起来,lazy watcher计算完成之后再改回去
   var current = Dep.target
   this.value = this.get()
   this.dirty = false
