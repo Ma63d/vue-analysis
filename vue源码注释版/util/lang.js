@@ -50,17 +50,22 @@ export function del (obj, key) {
   delete obj[key]
   var ob = obj.__ob__
   if (!ob) {
+    // 如果没有ob那么就是非对象属性或者是obj是vue实例
     if (obj._isVue) {
+      // 直接delete,并执行vm._digest,通知所有watcher,重新求值,求值过程也就解绑了这个依赖
       delete obj._data[key]
       obj._digest()
     }
     return
   }
+  // 通知watcher重新求值,更新界面并重新订阅依赖,也就删除了原来的依赖
   ob.dep.notify()
   if (ob.vms) {
     var i = ob.vms.length
     while (i--) {
       var vm = ob.vms[i]
+      // 取消vm代理这个数据
+      // 重新收集依赖
       vm._unproxy(key)
       vm._digest()
     }

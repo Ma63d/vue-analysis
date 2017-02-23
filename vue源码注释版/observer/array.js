@@ -38,9 +38,11 @@ export const arrayMethods = Object.create(arrayProto)
         inserted = args
         break
       case 'splice':
+          // splice下标为2及之后位置的参数位置填写的是要填入数组中的新元素
         inserted = args.slice(2)
         break
     }
+    // 如果有新元素添加,先对他们执行observe
     if (inserted) ob.observeArray(inserted)
     // notify change
     ob.dep.notify()

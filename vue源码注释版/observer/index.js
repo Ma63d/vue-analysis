@@ -43,7 +43,7 @@ export function Observer (value) {
   def(value, '__ob__', this)
   if (isArray(value)) {
     // 如果是数组,要改写数组的push pop shift等方法 参见http://v1.vuejs.org/guide/list.html#Array-Change-Detection
-    // 而es5及更低版本的js标准情况下无法完美继承数组
+    // 而es5及更低版本的js情况下无法完美继承数组
     // 参见http://perfectionkills.com/how-ecmascript-5-still-does-not-allow-to-subclass-an-array/
     // 如果浏览器实现了非标准的__proto__属性的话,那么可以实现继承数组,
     // 否则就只能用扩展实例的方式将改写过的push等方法直接def到实例上
@@ -187,6 +187,7 @@ export function observe (value, vm) {
     ob = new Observer(value)
   }
   if (ob && vm) {
+    // 如果直接是data,而不是data属性
     // 把vm加入到ob的vms数组当中,因为有的时候我们会对数据手动执行$set/$delete操作,
     // 那么就要提示vm实例这个行为的发生(让vm代理这个新$set的数据,和更新界面)
     ob.addVm(vm)
@@ -214,7 +215,8 @@ export function defineReactive (obj, key, val) {
   // cater for pre-defined getter/setters
   var getter = property && property.get
   var setter = property && property.set
-
+  // 对属性的值继续执行observe,如果属性的值是一个对象,那么则又递归进去对他的属性执行defineReactive
+  // 保证遍历到所有层次的属性
   var childOb = observe(val)
   Object.defineProperty(obj, key, {
     enumerable: true,
@@ -227,11 +229,13 @@ export function defineReactive (obj, key, val) {
       if (Dep.target) {
         dep.depend()
         if (childOb) {
+          // 如果value在observe过程中生成了ob实例,那么就让ob的dep也收集依赖
           childOb.dep.depend()
         }
         if (isArray(value)) {
           for (var e, i = 0, l = value.length; i < l; i++) {
             e = value[i]
+            //如果数组元素也是对象,那么他们observe过程也生成了ob实例,那么就让ob的dep也收集依赖
             e && e.__ob__ && e.__ob__.dep.depend()
           }
         }
