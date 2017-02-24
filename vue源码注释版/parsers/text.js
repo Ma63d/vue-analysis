@@ -46,6 +46,9 @@ export function compileRegex () {
 
 export function parseText (text) {
   if (!cache) {
+    // 执行cache 和 正则的初始化操作,
+    // 因为vue允许你修改插值的delimiters也就是'{{'和'}}'
+    // 所以需要用delimiters动态计算出用于tag匹配的正则
     compileRegex()
   }
   var hit = cache.get(text)
@@ -56,22 +59,30 @@ export function parseText (text) {
     return null
   }
   var tokens = []
+  // lastIndex记录上一次匹配到的插值字符串结束位置+1的位置,即最后一个花括号后一个的位置
   var lastIndex = tagRE.lastIndex = 0
   var match, index, html, value, first, oneTime
   /* eslint-disable no-cond-assign */
+  // 反复执行匹配操作,直至所有的插值都匹配完
   while (match = tagRE.exec(text)) {
+
   /* eslint-enable no-cond-assign */
+    // 当前匹配的起始位置
     index = match.index
     // push text token
     if (index > lastIndex) {
+      // 如果index比lastIndex要大,说明当前匹配的起始位置和上次的结束位置中间存在空隙,
+      // 比如'{{a}} to {{b}}',这个空隙就是中间的纯字符串部分' to '
       tokens.push({
         value: text.slice(lastIndex, index)
       })
     }
     // tag token
     html = htmlRE.test(match[0])
+    // 如果用于匹配{{{xxx}}}的htmlRE匹配上了,则应该从第一个捕获结果中取出value,反之则为match[2]
     value = html ? match[1] : match[2]
     first = value.charCodeAt(0)
+    // 有value的第一个字符是否为* 判断是否是单次插值
     oneTime = first === 42 // *
     value = oneTime
       ? value.slice(1)
@@ -82,9 +93,12 @@ export function parseText (text) {
       html: html,
       oneTime: oneTime
     })
+    // lastIndex记录为本次匹配结束位置的后一位.
+    // 注意index + match[0].length到达的是后一位
     lastIndex = index + match[0].length
   }
   if (lastIndex < text.length) {
+    // 如果上次匹配结束位置的后一位之后还存在空间,则应该是还有纯字符串
     tokens.push({
       value: text.slice(lastIndex)
     })
