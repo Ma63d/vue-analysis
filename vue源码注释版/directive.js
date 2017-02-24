@@ -88,7 +88,7 @@ Directive.prototype._bind = function () {
   }
 
   // copy def properties
-  // 不采用原型链继承,而是直接用定义对象来扩展Directive实例
+  // 不采用原型链继承,而是直接用extend对象来扩展Directive实例
   var def = descriptor.def
   if (typeof def === 'function') {
     this.update = def

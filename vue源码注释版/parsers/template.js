@@ -104,12 +104,13 @@ function stringToFragment (templateString, raw) {
   var commentMatch = commentRE.test(templateString)
 
   if (!tagMatch && !entityMatch && !commentMatch) {
+    // 如果没有tag 或者没有html字符实体(如&nbsp;) 或者 没有注释
     // text only, return a single text node.
     frag.appendChild(
       document.createTextNode(templateString)
     )
   } else {
-    // 这里如函数签名所说,使用了jQuery 和 component/domify中所使用的生成元素的策略
+    // 这里如前面的函数签名所说,使用了jQuery 和 component/domify中所使用的生成元素的策略
     // 我们要将模板变成实际的dom元素,一个简单的方法的是创建一个div document.createElement('div')
     // 然后再设置这个div的innerHtml为我们的模板,
     // (不直接创建一个模板的根元素是因为模板可能是片段实例,也就会生成多个dom元素)
@@ -125,12 +126,16 @@ function stringToFragment (templateString, raw) {
     var node = document.createElement('div')
 
     node.innerHTML = prefix + templateString + suffix
+    // 这里是不断深入,进入正确的dom,
+    // 比如你标签是tr,那么我会为包上table和tbody元素
+    // 那么我拿到你的时候应该剥开外层的两个元素,让node指到tr
     while (depth--) {
       node = node.lastChild
     }
 
     var child
     /* eslint-disable no-cond-assign */
+    // 用while循环把所有的子节点都提取了,因为可能是片段实例
     while (child = node.firstChild) {
     /* eslint-enable no-cond-assign */
       frag.appendChild(child)
@@ -157,6 +162,8 @@ function nodeToFragment (node) {
   // events and can cause crashes when the nodes are removed from DOM, so we
   // have to treat template elements as string templates. (#2805)
   /* istanbul ignore if */
+  // 在node是template元素的情况下,尽管他的content已经是一个document fragment,但是因为浏览器bug真心太多
+  // 所以还是取出innerHTML出来又stringToFragment一遍
   if (isRealTemplate(node)) {
     return stringToFragment(node.innerHTML)
   }
@@ -165,6 +172,7 @@ function nodeToFragment (node) {
     return stringToFragment(node.textContent)
   }
   // normal node, clone it to avoid mutating the original
+  // 那个node可能会被很多vm实例用,也可能就是需要摆在页面上的,所以clone之后复制进frag里.
   var clonedNode = cloneNode(node)
   var frag = document.createDocumentFragment()
   var child
@@ -220,6 +228,8 @@ export function cloneNode (node) {
   var res = node.cloneNode(true)
   var i, original, cloned
   /* istanbul ignore if */
+  // Safari的某些老版本在克隆元素时,如果里面有template标签,
+  // 那么克隆之后生成的新dom会错误的丢失template里的内容.
   if (hasBrokenTemplate) {
     var tempClone = res
     if (isRealTemplate(node)) {
@@ -239,6 +249,7 @@ export function cloneNode (node) {
     }
   }
   /* istanbul ignore if */
+  // ie的textarea的bug,复制后会把placeholder的内容错误的放在value里
   if (hasTextareaCloneBug) {
     if (node.tagName === 'TEXTAREA') {
       res.value = node.value
@@ -305,6 +316,7 @@ export function parseTemplate (template, shouldClone, raw) {
     }
   } else if (template.nodeType) {
     // a direct node
+    // template是一个template元素也会进入此处
     frag = nodeToFragment(template)
   }
 

@@ -56,6 +56,7 @@ export default function (Vue) {
     // on the container node and replacer node.
     var original = el
     el = transclude(el, options)
+    // 在el这个dom上挂一些参数,并触发'beforeCompile'钩子,为compile做准备
     this._initElement(el)
 
     // handle v-pre on root node (#2026)
@@ -69,6 +70,8 @@ export default function (Vue) {
     var rootLinker = compileRoot(el, options, contextOptions)
 
     // resolve slot distribution
+    // 具体是将各个slot存储到vm._slotContents的对应属性里面去，
+    // 然后后面的compile阶段会把slot解析为指令然后进行处理
     resolveSlots(this, options._content)
 
     // compile and link the rest

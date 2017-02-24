@@ -42,6 +42,8 @@ export function transclude (el, options) {
     el = parseTemplate(el)
   }
   if (options) {
+    // 如果当前是component,并且没有模板,只有一个壳
+    // 那么只需要处理内容的嵌入
     if (options._asComponent && !options.template) {
       options.template = '<slot></slot>'
     }
@@ -73,6 +75,7 @@ function transcludeTemplate (el, options) {
   var template = options.template
   var frag = parseTemplate(template, true)
   if (frag) {
+    // 对于非片段实例情况且replace为true的情况下,frag的第一个子节点就是最终el元素的替代者
     var replacer = frag.firstChild
     var tag = replacer.tagName && replacer.tagName.toLowerCase()
     if (options.replace) {
@@ -105,7 +108,9 @@ function transcludeTemplate (el, options) {
       ) {
         return frag
       } else {
+        // 抽取replacer自带的属性,他们将在自身作用域下编译
         options._replacerAttrs = extractAttrs(replacer)
+        // 把el的所有属性都转移到replace上面去,因为我们后面将不会再处理el直至他最后被replacer替换
         mergeAttrs(el, replacer)
         return replacer
       }
