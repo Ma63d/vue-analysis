@@ -88,10 +88,10 @@ export function parseText (text) {
       ? value.slice(1)
       : value
     tokens.push({
-      tag: true,
-      value: value.trim(),
-      html: html,
-      oneTime: oneTime
+      tag: true, // 是插值还是普通字符串
+      value: value.trim(), // 存放普通字符串或者插值表达式
+      html: html, // 是否是html插值
+      oneTime: oneTime // 是否是单次插值
     })
     // lastIndex记录为本次匹配结束位置的后一位.
     // 注意index + match[0].length到达的是后一位

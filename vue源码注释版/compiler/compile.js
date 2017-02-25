@@ -324,6 +324,7 @@ function compileElement (el, options) {
   // preprocess textareas.
   // textarea treats its text content as the initial value.
   // just bind it as an attr directive for value.
+
   // textarea元素是把tag中间的内容当做了他的value,这和input什么的不太一样
   // 因此大家写模板的时候通常是这样写: <textarea>{{hello}}</textarea>
   // 但是template转换成dom之后,这个内容跑到了textarea元素的value属性上,tag中间的内容是空的,
@@ -507,6 +508,7 @@ function compileNodeList (nodeList, options) {
       node.hasChildNodes()
         ? compileNodeList(node.childNodes, options)
         : null
+    // 为什么是紧邻着的push了nodeLinkFn和childLinkFn,请参见makeChildLinkFn注释
     linkFns.push(nodeLinkFn, childLinkFn)
   }
   return linkFns.length
@@ -530,6 +532,15 @@ function makeChildLinkFn (linkFns) {
       childrenLinkFn = linkFns[i++]
       // cache childNodes before linking parent, fix #657
       var childNodes = toArray(node.childNodes)
+      // 比如模板如下:
+      // <div>
+      //      <div id="a"><span>a</span><div>
+      //      <div><span>b</span><div>
+      // </div>
+      // link时,遍历外层div的子元素,遍历到#a时
+      // 然后就把<div id="a"><div>交给nodeLinkFn,
+      // 然后把#a的childNodes:<span>a</span> 交给childLinkFn
+      // 每轮遍历会同时遍历到元素和元素的childNodes,所以当时就把他们的link函数push在相邻的位置
       if (nodeLinkFn) {
         nodeLinkFn(vm, node, host, scope, frag)
       }
@@ -573,6 +584,7 @@ function checkElementDirectives (el, options) {
 function checkComponent (el, options) {
   var component = checkComponentAttr(el, options)
   if (component) {
+    // 遍历el上的attribute,检测有无v-ref
     var ref = findRef(el)
     var descriptor = {
       name: 'component',
@@ -585,6 +597,7 @@ function checkComponent (el, options) {
     }
     var componentLinkFn = function (vm, el, host, scope, frag) {
       if (ref) {
+        // 如果定义了ref,则需要把$refs上的对应属性设置为响应式的
         defineReactive((scope || vm).$refs, ref, null)
       }
       vm._bindDir(descriptor, el, host, scope, frag)
