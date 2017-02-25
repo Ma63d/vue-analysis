@@ -50,7 +50,7 @@ export default function Watcher (vm, expOrFn, cb, options) {
   // 并在里面闭包了一个新创建的lazy watcher,详见instance/internal/state.js:Vue.prototype._initComputed函数
   // 而指令bind函数中创建的那个并不是lazy watcher,即使这个指令是绑定到一个计算属性上的,请注意区分
   // lazy不会像一般的指令的watcher那样在这个watcher构造函数里计算初始值(this.value)
-  // 求值的时机是在外界get这个计算属性时(参见http://v1-cn.vuejs.org/guide/reactivity.html#计算属性的奥秘),
+  // 求值的时机是在外界get这个计算属性时(参见官网http://v1-cn.vuejs.org/guide/reactivity.html#计算属性的奥秘),
   // 而计算属性的getter里写有了逻辑,如果他的lazy watcher的dirty是false,
   // 就拿出之前计算过的值返回给你(dirty的意思表示是数据的依赖有变化,你需要重新计算)
   // 否则就会使用Watcher.prototype.evaluate完成求值,
@@ -80,7 +80,7 @@ export default function Watcher (vm, expOrFn, cb, options) {
     var res = parseExpression(expOrFn, this.twoWay)
     this.getter = res.get
     // 比如scope.a = {b: {c: 0}} 而expression为a.b.c
-    // 执行res.set(scope, 123)能得到scope.a变成{b: {c: 0}}
+    // 执行res.set(scope, 123)能得到scope.a变成{b: {c: 123}}
     this.setter = res.set
   }
   // 执行get(),既拿到表达式的值,又完成第一轮的依赖收集,使得watcher订阅到相关的依赖

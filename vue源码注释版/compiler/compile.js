@@ -444,6 +444,8 @@ function processTextToken (token, options) {
   }
   function setTokenType (type) {
     if (token.descriptor) return
+    // parseDirective其实是解析出filters,
+    // 比如 'msg | uppercase' 就会生成{expression:'msg',filters:[过滤器名称和参数]}
     var parsed = parseDirective(token.value)
     token.descriptor = {
       name: type,
@@ -473,6 +475,7 @@ function makeTextNodeLinkFn (tokens, frag) {
       if (token.tag) {
         node = childNodes[i]
         if (token.oneTime) {
+          // 单次插值直接$eval,因为不是用watcher来计算表达式的值,所以不会收集任何依赖,也就避免响应式更新
           value = (scope || vm).$eval(value)
           if (token.html) {
             replace(node, parseTemplate(value, true))
@@ -827,10 +830,8 @@ function compileDirectives (attrs, options) {
       filters: parsed && parsed.filters,
       interp: interpTokens,
       // 这个用来记录是否是单次插值的属性只会在bind指令中用到,
-      // bind指令的bind阶段检测到这个属性之后会执行parseExpression,然后隐式的处理单次插值的情况
-      // 处理后的expression表达式是这样的: 举个栗子,'"hello " + " world " + "!"'
-      // 这个纯字符串字面量的表达式的求值过程不会触发任何响应式属性的getter,
-      // 也就不存在依赖,自然也就不会存在响应式更新的情况,这就是单次插值的整个实现原理
+      // bind指令的bind阶段检测到这个属性之后会执行tokensToExp,然后隐式的处理单次插值的情况
+      // 详见bind指令的bind函数
       hasOneTime: hasOneTimeToken
     })
   }

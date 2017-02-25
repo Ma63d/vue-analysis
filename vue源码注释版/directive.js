@@ -80,6 +80,8 @@ Directive.prototype._bind = function () {
 
   // remove attribute
   if (
+    // 只要不是cloak指令那就从dom的attribute里移除了
+    // 是cloak指令但是已经编译和link完成了的话,那也还是可以移除的
     (name !== 'cloak' || this.vm._isCompiled) &&
     this.el && this.el.removeAttribute
   ) {

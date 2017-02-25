@@ -26,6 +26,7 @@ const newlineRE = /\n/g
 const saveRE = /[\{,]\s*[\w\$_]+\s*:|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*\$\{|\}(?:[^`\\]|\\.)*`|`(?:[^`\\]|\\.)*`)|new |typeof |void /g
 const restoreRE = /"(\d+)"/g
 const pathTestRE = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\['.*?'\]|\[".*?"\]|\[\d+\]|\[[A-Za-z_$][\w$]*\])*$/
+// identRE匹配第一个字符不是标识符而后面紧跟着标识符的情况 比如'vue+jQuery'中的'+jQuery',捕获'jQuery'
 const identRE = /[^\w$\.](?:[A-Za-z_$][\w$]*)/g
 const literalValueRE = /^(?:true|false|null|undefined|Infinity|NaN)$/
 
@@ -126,7 +127,9 @@ function compileGetter (exp) {
     .replace(wsRE, '')
   // rewrite all paths
   // pad 1 space here because the regex matches 1 extra char
-  // identRE会匹配到变量,将变量rewrite为scope.xxx的形式,
+  // identRE会匹配到那些运算符或空白符后的变量,将变量rewrite为scope.xxx的形式,
+  // 而body前之所以要加一个就是要开头位置如果也是变量的话成功匹配上
+  // 比如 'a+b*2'不加空格则只会得到'a+scope.b*2'
   // fixme! 没有看明白restoreRE和restore函数具体是对字符串做了什么处理
   body = (' ' + body)
     .replace(identRE, rewrite)

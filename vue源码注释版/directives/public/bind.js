@@ -41,8 +41,11 @@ export default {
     if (tokens) {
       // handle interpolations with one-time tokens
       if (descriptor.hasOneTime) {
-        // 对于单次插值的函数直接将表达式转换为'"a " + "text" + " c"',然后以此作为最终的值
-        // 由于单次插值的函数不会订阅任何依赖,不会触发update,所以把这个操作放在了bind里
+        // 对于单次插值的情况
+        // 在tokensToExp内部使用$eval将表达式'a '+val+' c'转换为'"a " + "text" + " c"',以此结果为新表达式
+        // $eval过程中未设置Dep.target,因而不会订阅任何依赖,
+        // 而后续Watcher.get在计算这个新的纯字符串表达式过程中则必然不会触发任何getter,也不会订阅任何依赖
+        // 单次插值由此完成
         this.expression = tokensToExp(tokens, this._scope || this.vm)
       }
 
