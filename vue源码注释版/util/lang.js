@@ -11,25 +11,33 @@
 
 export function set (obj, key, val) {
   if (hasOwn(obj, key)) {
+    // 如果本来就有这个属性,那么就只是修改就可以了
     obj[key] = val
     return
   }
   if (obj._isVue) {
+    // 在Vue实例上设置某个属性其实是到_data上去设置
     set(obj._data, key, val)
     return
   }
+  // 获取对象身上的observer实例
   var ob = obj.__ob__
   if (!ob) {
+    // 没有ob实例,那么这个对象就不是plainObject
     obj[key] = val
     return
   }
+  // 将这个新设置的属性响应化
   ob.convert(key, val)
   ob.dep.notify()
+  // 如果设置的是data的顶级属性
   if (ob.vms) {
     var i = ob.vms.length
     while (i--) {
       var vm = ob.vms[i]
+      // 代理到vm上去
       vm._proxy(key)
+      // 触发vm的所有watcher
       vm._digest()
     }
   }

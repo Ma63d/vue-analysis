@@ -111,8 +111,11 @@ export default {
     const el = this.el
     const interp = this.descriptor.interp
     if (this.modifiers.camel) {
+      // 将绑定的attribute名字转回驼峰命名,svg的属性绑定时可能会用到
       attr = camelize(attr)
     }
+    // 对于value|checked|selected等attribute,不仅仅要setAttribute把dom上的attribute值修改了
+    // 还要在el上修改el['value']/el['checked']等值为对应的值
     if (
       !interp &&
       attrWithPropsRE.test(attr) &&
@@ -129,12 +132,16 @@ export default {
       }
     }
     // set model props
+    // vue支持设置checkbox/radio/option等的true-value,false-value,value等设置,
+    // 如<input type="radio" v-model="pick" v-bind:value="a">
+    // 如果bind的是此类属性,那么则把value放到元素的对应的指定属性上,供v-model提取
     var modelProp = modelProps[attr]
     if (!interp && modelProp) {
       el[modelProp] = value
       // update v-model if present
       var model = el.__v_model
       if (model) {
+        // 如果这个元素绑定了一个model,那么就提示model,这个input组件value有更新
         model.listener()
       }
     }
@@ -144,6 +151,7 @@ export default {
       return
     }
     // update attribute
+    // 如果是只接受true false 的"枚举型"的属性
     if (enumeratedAttrRE.test(attr)) {
       el.setAttribute(attr, value ? 'true' : 'false')
     } else if (value != null && value !== false) {
