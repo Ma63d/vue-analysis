@@ -1,6 +1,7 @@
 # vue-analysis
 Vue源码注释版 及 Vue源码详细解析
-本文介绍的源码版本是当前(17年2月23日)1.x版本的最新版v1.0.26，2.x版本的源码会在之后更新。
+
+本项目介绍的源码版本是当前(17年2月23日)1.x版本的最新版v1.0.26，2.x版本的源码会在之后更新。
 
 ## Vue源码详细解析
 
@@ -8,9 +9,14 @@ Vue源码详细解析教程包含了Vue中从数据observe到模板解析、tran
 
 ### 文章
 * [Vue源码详细解析(一)--数据的响应化](https://github.com/Ma63d/vue-analysis/issues/1)
+
+  主要介绍了Vue如何实现数据的相应化，以及面对getter/setter无法监听属性删除、添加的缺点，Vue是如何弥补。
 * [Vue源码详细解析(二)-- _compile函数的整体介绍与transclude分析](https://github.com/Ma63d/vue-analysis/issues/2)
+  介绍Vue如何将HTML模板转化为真正的dom。
 * [Vue源码详细解析(三)--compile函数：指令的提取](https://github.com/Ma63d/vue-analysis/issues/3)
+  详细阐述指令提取与解析插值模板的过程。
 * [Vue源码详细解析(四)--link函数](https://github.com/Ma63d/vue-analysis/issues/4)
+  结合具体的指令分析其构建、bind、update过程，并阐述了依赖订阅、退订和表达式如何解析为对应get函数相关内容。
 * [Vue源码详细解析(五)--batcher：数据变动后的批处理更新dom](https://github.com/Ma63d/vue-analysis/issues/5)
 
 ### 正在书写
