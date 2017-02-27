@@ -94,8 +94,11 @@ function runBatcherQueue (queue) {
 
 export function pushWatcher (watcher) {
   const id = watcher.id
+  // 如果已经有这个watcher了,就不用加入队列了,这样不管一个数据更新多少次,Vue都只更新一次dom
   if (has[id] == null) {
     // push watcher into appropriate queue
+    // 选择合适的队列,对于用户使用$watch方法或者watch选项观察数据的watcher,则要放到userQueue中
+    // 因为他们的回调在执行过程中可能又触发了其他watcher的更新,所以要分两个队列存放
     const q = watcher.user
       ? userQueue
       : queue

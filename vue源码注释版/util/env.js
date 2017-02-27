@@ -73,6 +73,10 @@ export const nextTick = (function () {
   var timerFunc
   function nextTickHandler () {
     pending = false
+    // 之所以要slice复制一份出来是因为有的cb执行过程中又会往callbacks中加入内容
+    // 比如$nextTick的回调函数里又有$nextTick
+    // 这些是应该放入到下一个轮次的nextTick去执行的,
+    // 所以拷贝一份当前的,遍历执行完他们,避免无休止的执行下去
     var copies = callbacks.slice(0)
     callbacks = []
     for (var i = 0; i < copies.length; i++) {
@@ -83,11 +87,17 @@ export const nextTick = (function () {
   /* istanbul ignore if */
   if (typeof MutationObserver !== 'undefined' && !hasMutationObserverBug) {
     var counter = 1
+    // 为创建一个MutationObserver,每次mutation更新到dom后执行回调nextTickHandler
     var observer = new MutationObserver(nextTickHandler)
     var textNode = document.createTextNode(counter)
+    // 调用MutationObserver的接口,观测文本节点的字符内容
     observer.observe(textNode, {
       characterData: true
     })
+    // 每次执行timerFunc都会让文本节点的内容在0/1之间切换,
+    // 切换之后将新值复制到那个我们MutationObserver观测的文本节点上去
+    // 这个textNode的dom更新好的时候,也就是MutationObserver执行我回调的时候,
+    // 也就意味着之前轮次的事件循环中的dom操作也已更新到dom上
     timerFunc = function () {
       counter = (counter + 1) % 2
       textNode.data = counter
@@ -96,6 +106,7 @@ export const nextTick = (function () {
     // webpack attempts to inject a shim for setImmediate
     // if it is used as a global, so we have to work around that to
     // avoid bundling unnecessary code.
+    // 没有MutationObserver就用setImmediate或者setTimeout(cb,0)替代
     const context = inBrowser
       ? window
       : typeof global !== 'undefined' ? global : {}
@@ -106,6 +117,7 @@ export const nextTick = (function () {
       ? function () { cb.call(ctx) }
       : cb
     callbacks.push(func)
+    // 如果pending为true, 就其实表明本轮事件循环中已经执行过timerFunc(nextTickHandler, 0)
     if (pending) return
     pending = true
     timerFunc(nextTickHandler, 0)
