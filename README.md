@@ -19,9 +19,9 @@ Vue源码详细解析教程包含了Vue中从数据observe到模板解析、tran
 - [ ] Vue源码详细解析--`_digest`方法与shallow update
 - [ ] Vue源码详细解析--v-for指令的实现
 
-## Vue源码注释版
+## [Vue源码注释版](https://github.com/Ma63d/vue-analysis/tree/master/vue%E6%BA%90%E7%A0%81%E6%B3%A8%E9%87%8A%E7%89%88)
 
-源码注释版比文章要更加详细，对于看源码的同学，应该能帮到你。
+[源码注释版](https://github.com/Ma63d/vue-analysis/tree/master/vue%E6%BA%90%E7%A0%81%E6%B3%A8%E9%87%8A%E7%89%88)比文章要更加详细，对于看源码的同学，应该能帮到你。
 
 虽然Vue本身的英文注释已经足够详尽，但依然有许多对于初看源码的同学而言比较难以理解的部分。主要是Vue实现的功能较多，因此，许多代码不知道其目的所在。因此我尽量注释了一些让人困惑的部分。对于许多已经很清晰的代码，如util部分、event部分，则基本没有涉及。
 
