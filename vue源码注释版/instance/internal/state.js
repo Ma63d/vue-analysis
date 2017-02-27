@@ -202,6 +202,13 @@ export default function (Vue) {
 
   Vue.prototype._digest = function () {
     for (var i = 0, l = this._watchers.length; i < l; i++) {
+      // shallow updates 浅层更新,即对于对象的情况,如果oldVal和val指向同一个值,那就不用再执行指令的update(修改dom),
+      // 而不是像正常改动数据后的更新那样,只要被notify了,即使引用相同也是要更改的dom的,因为可能是内部的属性更新了
+      // 因为_digest只会在data的顶级属性set/delete的时候执行, 不会有任何watcher订阅整个data,
+      // 而_digest会"无情"的触发所有watcher执行update(就是下面这行代码啦)
+      // 因此只要让那些想要订阅我刚刚set的这个属性的watcher订阅即可,
+      // 对于他们而言,这个属性由undefined变成一个新值,都不用考虑深层还是浅层的问题,直接更新,详见Watcher.prototype.run
+      // 而对于其他被无辜触发的watcher,Vue让他们有执行浅层更新,只要引用相同即可,不必去执行指令的update,避免不必要的性能开销
       this._watchers[i].update(true) // shallow updates
     }
   }

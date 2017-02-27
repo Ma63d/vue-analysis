@@ -263,11 +263,18 @@ Watcher.prototype.update = function (shallow) {
   } else {
     // if queued, only overwrite shallow with non-shallow,
     // but not the other way around.
+    // 首先,shallow形参只在_digest里为true,表示浅层更新,其他改动数据引发notify的情况都是false,表示深层更新
+    // 如果一个watcher在当前轮次的事件循环里是第一次执行update,this.shallow就直接存放shallow的值('!!'只是转换undefined为false)
+    // 如果是后续再一次update,那就要考虑一下了:若以前是浅层更新,而这一次是深层更新,那就一定要修改为深层更新,
+    // 若以前是深层更新,那不管这一次是啥都继续保持深层更新
+    // 因为深层更新包含了浅层更新的所有操作,还多出了执行指令的update这一步,因此浅可以转深,深不能转浅
+    // 详见Vue.prototype._digest 和Watcher.prototype.run
     this.shallow = this.queued
       ? shallow
         ? this.shallow
         : false
       : !!shallow
+    // 标记已经加入批处理队列
     this.queued = true
     // record before-push error stack in debug mode
     /* istanbul ignore if */
@@ -286,6 +293,11 @@ Watcher.prototype.update = function (shallow) {
 Watcher.prototype.run = function () {
   if (this.active) {
     var value = this.get()
+    // 如果两次数据不相同,则不仅要执行上面的 求值、订阅依赖 ,还要执行下面的 指令update、更新dom
+    // 如果是相同的,那么则要考虑是否为Deep watchers and watchers on Object/Arrays
+    // 因为虽然对象引用相同,但是可能内层属性有变动,
+    // 但是又存在一种特殊情况,如果是对象引用相同,但为浅层更新(this.shallow为true),
+    // 则一定不可能是内层属性变动的这种情况(因为他们只是_digest引起的watcher"无辜"update),所以不用执行后续操作
     if (
       value !== this.value ||
       // Deep watchers and watchers on Object/Arrays should fire even
