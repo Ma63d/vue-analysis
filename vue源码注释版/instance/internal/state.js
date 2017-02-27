@@ -165,6 +165,8 @@ export default function (Vue) {
    */
 
   Vue.prototype._proxy = function (key) {
+    // $和_开头的属性默认是Vue内部属性,不允许挂载到Vue上,
+    // 大家自己写data的时候也尽量别写这些属性名,尤其是在使用mongo做后台时,没错,我想说的就是那个_id属性
     if (!isReserved(key)) {
       // need to store ref to self here
       // because these getter/setters might
