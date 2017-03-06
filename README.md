@@ -7,7 +7,7 @@ Vue源码注释版 及 Vue源码详细解析
 
 Vue源码详细解析教程包含了Vue中从数据observe到模板解析、transclude、compile、link、指令的bind、update、dom批处理更新、数组diff等等环节，基本涵盖了Vue整个生命周期过程。订阅新文章请watch本项目。
 
-### 文章
+### 文章 **主线剧情**
 * [Vue源码详细解析(一)--数据的响应化](https://github.com/Ma63d/vue-analysis/issues/1)
 
   主要介绍了Vue如何实现数据的相应化，以及面对getter/setter无法监听属性删除、添加的缺点，Vue是如何弥补。
@@ -18,6 +18,11 @@ Vue源码详细解析教程包含了Vue中从数据observe到模板解析、tran
 * [Vue源码详细解析(四)--link函数](https://github.com/Ma63d/vue-analysis/issues/4)
   结合具体的指令分析其构建、bind、update过程，并阐述了依赖订阅、退订和表达式如何解析为对应get函数相关内容。
 * [Vue源码详细解析(五)--batcher：数据变动后的批处理更新dom](https://github.com/Ma63d/vue-analysis/issues/5)
+
+### 文章 **支线剧情**
+*阅读之前,请先阅读完主线剧情的内容,我在书写时也默认您已经看完主线系列文章,不会再细说Vue核心部分的内容.*
+
+* [Vue源码详解之nextTick：MutationObserver只是浮云，microtask才是核心！](https://github.com/Ma63d/vue-analysis/issues/6)
 
 ### 正在书写
 

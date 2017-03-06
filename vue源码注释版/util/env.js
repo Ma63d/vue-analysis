@@ -87,7 +87,9 @@ export const nextTick = (function () {
   /* istanbul ignore if */
   if (typeof MutationObserver !== 'undefined' && !hasMutationObserverBug) {
     var counter = 1
-    // 为创建一个MutationObserver,每次mutation更新到dom后执行回调nextTickHandler
+    // 为创建一个MutationObserver,绑定回调nextTickHandler
+    // 每次MutationObserver会在观测到DOM变化时,将回调函数加入到microtask队列中,
+    // 在当前task代码完成之后会执行nextTickHandler
     var observer = new MutationObserver(nextTickHandler)
     var textNode = document.createTextNode(counter)
     // 调用MutationObserver的接口,观测文本节点的字符内容
@@ -95,9 +97,8 @@ export const nextTick = (function () {
       characterData: true
     })
     // 每次执行timerFunc都会让文本节点的内容在0/1之间切换,
-    // 切换之后将新值复制到那个我们MutationObserver观测的文本节点上去
-    // 这个textNode的dom更新好的时候,也就是MutationObserver执行我回调的时候,
-    // 也就意味着之前轮次的事件循环中的dom操作也已更新到dom上
+    // 切换之后将新值赋值到那个我们MutationObserver观测的文本节点上去
+    // 这个操作就会触发MO收到DOM变更消息,从而去执行回调
     timerFunc = function () {
       counter = (counter + 1) % 2
       textNode.data = counter
