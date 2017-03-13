@@ -270,6 +270,8 @@ Directive.prototype._checkStatement = function () {
 
 Directive.prototype.set = function (value) {
   /* istanbul ignore else */
+  // 对于双向指令,比如一个input type=text上面有v-model,那么当你修改input的内容时,页面已经更新好了,
+  // 因此需要把这个watcher锁住,这样就只用把value写进Vue的data中即可,不用再更新到DOM上,不然就死循环了
   if (this.twoWay) {
     this._withLock(function () {
       this._watcher.set(value)

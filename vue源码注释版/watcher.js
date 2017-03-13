@@ -370,6 +370,11 @@ Watcher.prototype.teardown = function () {
     // this is a somewhat expensive operation so we skip it
     // if the vm is being destroyed or is performing a v-for
     // re-render (the watcher list is then filtered by v-for).
+    // 在v-for指令的diff方法中,在开始销毁不需要的watcher时,_vForRemoving设置为true
+    // 也就不执行$remove操作,
+    // 因为$remove操作是对数组先indexOf,遍历的找到指定元素的index,然后再splice(index,1),
+    // 遍历和splice都是高耗操作,因此,暂时不执行,
+    // 在v-for中,稍后filter找出active为true的watcher并保存之,一次遍历即可.详见v-for的diff方法
     if (!this.vm._isBeingDestroyed && !this.vm._vForRemoving) {
       this.vm._watchers.$remove(this)
     }

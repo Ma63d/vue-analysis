@@ -38,6 +38,8 @@ export default function FragmentFactory (vm, el) {
   } else {
     linker = compile(template, vm.$options, true)
   }
+  // linker存储在了FragmentFactory实例上,因此每次让FragmentFactory产出Fragment的过程,
+  // 就是传入复制的DOM和scope来执行linker的过程
   this.linker = linker
 }
 

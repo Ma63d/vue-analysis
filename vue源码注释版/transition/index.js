@@ -74,6 +74,7 @@ export function applyTransition (el, direction, op, vm, cb) {
     // animation.
     (vm.$parent && !vm.$parent._isCompiled)
   ) {
+    // 没有transition就直接移除元素就好了,一般op就是移除dom的操作
     op()
     if (cb) cb()
     return
