@@ -228,14 +228,21 @@ const vFor = {
       frag = frags[i]
       // this is the frag that we should be after
       targetPrev = frags[i - 1]
+      // prevEl为targetPrev的最后一个元素,
+      // targetPrev表示按照现在frags的顺序,当前的frag应该摆在哪个frag的后面
+      // 如果i为0,那么targetPrev就会是undefined,prevEl也就会是start anchor,
+      // 也就是放在v-for的anchor后面即可
+      // 否则i不0,targetPrev有值,那就放在targetPrev.end || targetPrev.node 之后
       prevEl = targetPrev
         ? targetPrev.staggerCb
           ? targetPrev.staggerAnchor
           : targetPrev.end || targetPrev.node
         : start
       if (frag.reused && !frag.staggerCb) {
+        // 在当前DOM里,frag目前是放在currentPrev后面的
         currentPrev = findPrevFrag(frag, start, this.id)
         if (
+          // 如果currentPrev和targetPrev相等,那么说明frag所在的位置就是我期望的位置
           currentPrev !== targetPrev && (
             !currentPrev ||
             // optimization for moving a single item.

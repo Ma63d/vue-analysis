@@ -23,12 +23,12 @@ Vue源码详细解析教程包含了Vue中从数据observe到模板解析、tran
 *阅读之前,请先阅读完主线剧情的内容,我在书写时也默认您已经看完主线系列文章,不会再细说Vue核心部分的内容.*
 
 * [Vue源码详解之nextTick：MutationObserver只是浮云，microtask才是核心！](https://github.com/Ma63d/vue-analysis/issues/6)
+* [Vue源码详解之v-for](https://github.com/Ma63d/vue-analysis/issues/7)
 
 ### 正在书写
 
 - [ ] Vue源码详细解析--计算属性与lazy watcher
 - [ ] Vue源码详细解析--`_digest`方法与shallow update
-- [ ] Vue源码详细解析--v-for指令的实现
 
 ## [Vue源码注释版](https://github.com/Ma63d/vue-analysis/tree/master/vue%E6%BA%90%E7%A0%81%E6%B3%A8%E9%87%8A%E7%89%88)
 
