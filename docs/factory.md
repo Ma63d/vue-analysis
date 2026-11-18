@@ -1,0 +1,86 @@
+# Module: factory
+
+**File:** `\vue源码注释版\fragment\factory.js`
+
+## Overview
+
+Module `factory` contains 1 analyzed entities.
+
+```
+import { compile } from '../compiler/index'
+import { isTemplate, getOuterHTML } from '../util/index'
+import { parseTemplate, cloneNode } from '../parsers/template'
+import Fragment from './fragment'
+import Cache from '../cache'
+
+const linkerCache = new Cache(5000)
+
+/**
+ * A factory that can be used to create instances of a
+ * fragment. Caches the compiled linker if possible.
+ *
+ * @param {Vue} vm
+ * @param {Element|String} el
+ */
+
+export default function FragmentFactory (vm, el) {
+  this.vm = vm
+  var template
+  var isString = typeof el === 'string'
+  if (isString || isTemplate(el) && !el.hasAttribute('v-if')) {
+    template = parseTemplate(el, true)
+  } else {
+    template = document.createDocumentFragment()
+    template.appendChild(el)
+  }
+  this.template = template
+  // linker can be cached, but only for components
+  var linker
+  var cid = vm.constructor.cid
+  if (cid > 0) {
+    var cacheId = cid + (isString ? el : getOuterHTML(el))
+    linker = linkerCache.get(cacheId)
+    if (!linker) {
+      linker = compile(template, vm.$options, true)
+      linkerCache.put(cacheId, linker)
+    }
+  } else {
+    linker = compile(template, vm.$options, true)
+  }
+  // linker存储在了FragmentFactory实例上,因此每次让FragmentFactory产出Fragment的过程,
+  // 就是传入复制的DOM和scope来执行linker的过程
+  this.linker = linker
+}
+
+/**
+ * Create a fragment instance with given host and scope.
+ *
+ * @param {Vue} host
+ * @param {Object} scope
+ * @param {Fragment} parentFrag
+ */
+
+FragmentFactory.prototype.create = function (host, scope, parentFrag) {
+  var frag = cloneNode(this.template)
+  return new Fragment(this.linker, this.vm, frag, host, scope, parentFrag)
+}
+```
+
+## Key Components
+
+| Entity | Type | Description |
+|--------|------|-------------|
+| `factory.FragmentFactory` | function | No description |
+
+## Git History
+
+- Commits: 2
+- Authors: 1
+- Bug fixes: 0
+- Features: 0
+
+## Note
+
+Connect an NVIDIA Nemotron model (Ollama locally or Nebius Serverless) and re-run
+`documentor generate` to upgrade these pages to AI-generated narrative docs with
+purpose, usage examples, and gotchas.
